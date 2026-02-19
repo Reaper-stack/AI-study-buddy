@@ -1,99 +1,116 @@
 import streamlit as st
 from groq import Groq
-import os
-from dotenv import load_dotenv
 
-client = Groq(api_key=st.secrets["GROQ_API_KEY"])
-
-
+# ---------------- CONFIG ----------------
 st.set_page_config(page_title="AI Study Buddy", page_icon="📚")
 
-# Header
-st.title("🎓 AI-Powered Study Buddy")
-st.info("Developed by Arpan SIngh ")
+# ---------------- API SETUP ----------------
+# Safely get API key from Streamlit secrets
+try:
+    client = Groq(api_key=st.secrets["GROQ_API_KEY"])
+except Exception:
+    st.error("⚠️ GROQ API key not found. Please add it in Streamlit Secrets.")
+    st.stop()
 
-# Sidebar
+# ---------------- HEADER ----------------
+st.title("🎓 AI-Powered Study Buddy")
+st.info("Developed by Arpan Singh")
+
+# ---------------- SIDEBAR ----------------
 menu = ["Home", "Explain Concept", "Summarize Notes", "Quiz Generator"]
 choice = st.sidebar.selectbox("Select Feature", menu)
 
-# Use Llama 3 (fast + free)
+# ---------------- MODEL ----------------
 MODEL_ID = "llama-3.1-8b-instant"
 
+# ---------------- FUNCTION ----------------
 def generate_response(prompt):
-    completion = client.chat.completions.create(
-        model=MODEL_ID,
-        messages=[
-            {"role": "system", "content": "You are a helpful study assistant."},
-            {"role": "user", "content": prompt}
-        ],
-        temperature=0.7
-    )
-    return completion.choices[0].message.content
+    try:
+        completion = client.chat.completions.create(
+            model=MODEL_ID,
+            messages=[
+                {"role": "system", "content": "You are a helpful study assistant."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.7
+        )
+        return completion.choices[0].message.content
 
-# Home
+    except Exception as e:
+        return f"❌ Error: {str(e)}"
+
+# ---------------- HOME ----------------
 if choice == "Home":
     st.subheader("Welcome to your Capstone Project!")
     st.write("This tool uses Groq + Llama 3 to help students understand complex topics.")
+
     st.markdown("""
     ### Features:
-    - 💡 **Explain:** Simple analogies for hard topics.
-    - 📝 **Summarize:** Long notes into bullet points.
-    - 🧠 **Quiz:** Auto-generated MCQs.
+    - 💡 **Explain:** Simple analogies for hard topics  
+    - 📝 **Summarize:** Long notes into bullet points  
+    - 🧠 **Quiz:** Auto-generated MCQs  
     """)
 
-# Explain Concept
+# ---------------- EXPLAIN ----------------
 elif choice == "Explain Concept":
     topic = st.text_input("Enter a complex topic:")
+
     if st.button("Simplify"):
-        if topic:
+        if topic.strip():
             prompt = f"Explain this like I'm 5 years old: {topic}"
             response = generate_response(prompt)
             st.success(response)
+        else:
+            st.warning("⚠️ Please enter a topic")
 
-# Summarize Notes
+# ---------------- SUMMARIZE ----------------
 elif choice == "Summarize Notes":
     text = st.text_area("Paste your notes here:", height=200)
+
     if st.button("Summarize"):
-        if text:
+        if text.strip():
             prompt = f"Summarize this into key bullet points:\n{text}"
             response = generate_response(prompt)
             st.write(response)
+        else:
+            st.warning("⚠️ Please paste some notes")
 
-# Quiz Generator
+# ---------------- QUIZ ----------------
 elif choice == "Quiz Generator":
     context = st.text_area("Paste content for the quiz:")
+
     if st.button("Generate 3 Questions"):
-        if context:
+        if context.strip():
             prompt = f"""
-                    Create exactly 3 multiple choice questions based on the text below.
+Create exactly 3 multiple choice questions based on the text below.
 
-                    Rules:
-                    - Each question must be clearly separated.
-                    - Each option must be on a new line.
-                    - Leave one blank line between questions.
-                    - Format strictly like this:
+Rules:
+- Each question must be clearly separated.
+- Each option must be on a new line.
+- Leave one blank line between questions.
 
-                    Question 1:
-                    <question text>
+Format:
 
-                    A. option
-                    B. option
-                    C. option
-                    D. option
+Question 1:
+<question>
 
-                    Question 2:
-                    ...
+A. option
+B. option
+C. option
+D. option
 
-                    After all questions, write:
+Question 2:
+...
 
-                    Answers:
-                    1. <correct option>
-                    2. <correct option>
-                    3. <correct option>
+Answers:
+1. <correct option>
+2. <correct option>
+3. <correct option>
 
-                    Text:
-                    {context}
-                    """
-
+Text:
+{context}
+"""
             response = generate_response(prompt)
             st.write(response)
+        else:
+            st.warning("⚠️ Please enter content")
