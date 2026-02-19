@@ -1,20 +1,20 @@
 import streamlit as st
-from openai import OpenAI
+from groq import Groq
 import os
 from dotenv import load_dotenv
 
-# Load environment variables
+# Load env variables (for local use)
 load_dotenv()
 
 # Get API key (Streamlit Cloud OR local)
-api_key = st.secrets.get("OPENAI_API_KEY") or os.getenv("OPENAI_API_KEY")
+api_key = st.secrets.get("GROQ_API_KEY") or os.getenv("GROQ_API_KEY")
 
 if not api_key:
-    st.error("❌ OpenAI API key not found. Add it in secrets or .env file.")
+    st.error("❌ GROQ API key not found. Add it in secrets or .env file.")
     st.stop()
 
-# Initialize OpenAI client
-client = OpenAI(api_key=api_key)
+# Initialize Groq client
+client = Groq(api_key=api_key)
 
 # Page config
 st.set_page_config(page_title="AI Study Buddy", page_icon="📚")
@@ -27,13 +27,13 @@ st.info("Developed by Arpan Singh")
 menu = ["Home", "Explain Concept", "Summarize Notes", "Quiz Generator"]
 choice = st.sidebar.selectbox("Select Feature", menu)
 
-# Model (fast + cheap)
-MODEL_ID = "gpt-4o-mini"
+# Groq Model (fast + free)
+MODEL_ID = "llama-3.1-8b-instant"
 
 # Function to generate response
 def generate_response(prompt):
     try:
-        response = client.chat.completions.create(
+        completion = client.chat.completions.create(
             model=MODEL_ID,
             messages=[
                 {"role": "system", "content": "You are a helpful study assistant."},
@@ -41,14 +41,14 @@ def generate_response(prompt):
             ],
             temperature=0.7
         )
-        return response.choices[0].message.content
+        return completion.choices[0].message.content
     except Exception as e:
         return f"❌ Error: {str(e)}"
 
 # Home
 if choice == "Home":
     st.subheader("Welcome to your Capstone Project!")
-    st.write("This tool uses OpenAI to help students understand complex topics.")
+    st.write("This tool uses Groq + Llama 3 to help students understand complex topics.")
     st.markdown("""
     ### Features:
     - 💡 **Explain:** Simple analogies for hard topics.
