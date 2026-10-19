@@ -34,7 +34,8 @@ menu = ["Home", "Explain Concept", "Summarize Notes", "Quiz Generator"]
 choice = st.sidebar.selectbox("Select Feature", menu)
 
 # Gemini Model (fast + free tier available)
-MODEL_ID = "gemini-2.5-flash"
+# New line
+MODEL_ID = "gemini-3.8-flash"
 
 # Function to generate response
 def generate_response(prompt):
