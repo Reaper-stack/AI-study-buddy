@@ -1,23 +1,29 @@
 import streamlit as st
-from groq import Groq
+from google import genai
+from google.genai import types
 import os
 from dotenv import load_dotenv
+
+# Page config MUST be the first Streamlit command
+st.set_page_config(page_title="AI Study Buddy", page_icon="📚")
 
 # Load env variables (for local use)
 load_dotenv()
 
-# Get API key (Streamlit Cloud OR local)
-api_key = st.secrets.get("GROQ_API_KEY") or os.getenv("GROQ_API_KEY")
+# Get API key safely (Streamlit Cloud OR local .env)
+api_key = os.getenv("GEMINI_API_KEY")
+if not api_key:
+    try:
+        api_key = st.secrets.get("GEMINI_API_KEY")
+    except Exception:
+        api_key = None
 
 if not api_key:
-    st.error("❌ GROQ API key not found. Add it in secrets or .env file.")
+    st.error("❌ GEMINI_API_KEY not found. Add it in Streamlit secrets or your .env file.")
     st.stop()
 
-# Initialize Groq client
-client = Groq(api_key=api_key)
-
-# Page config
-st.set_page_config(page_title="AI Study Buddy", page_icon="📚")
+# Initialize Gemini client
+client = genai.Client(api_key=api_key)
 
 # Header
 st.title("🎓 AI-Powered Study Buddy")
@@ -27,28 +33,28 @@ st.info("Developed by Arpan Singh")
 menu = ["Home", "Explain Concept", "Summarize Notes", "Quiz Generator"]
 choice = st.sidebar.selectbox("Select Feature", menu)
 
-# Groq Model (fast + free)
-MODEL_ID = "llama-3.1-8b-instant"
+# Gemini Model (fast + free tier available)
+MODEL_ID = "gemini-2.5-flash"
 
 # Function to generate response
 def generate_response(prompt):
     try:
-        completion = client.chat.completions.create(
+        response = client.models.generate_content(
             model=MODEL_ID,
-            messages=[
-                {"role": "system", "content": "You are a helpful study assistant."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.7
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                system_instruction="You are a helpful study assistant.",
+                temperature=0.7,
+            )
         )
-        return completion.choices[0].message.content
+        return response.text
     except Exception as e:
         return f"❌ Error: {str(e)}"
 
 # Home
 if choice == "Home":
     st.subheader("Welcome to your Capstone Project!")
-    st.write("This tool uses Groq + Llama 3 to help students understand complex topics.")
+    st.write("This tool uses Google Gemini to help students understand complex topics.")
     st.markdown("""
     ### Features:
     - 💡 **Explain:** Simple analogies for hard topics.
